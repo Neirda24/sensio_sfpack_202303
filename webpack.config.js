@@ -22,6 +22,11 @@ Encore
      */
     .addEntry('app', './assets/app.js')
 
+    .copyFiles({
+        from: 'assets/images',
+        to: 'images/[path]/[name].[hash:8].[ext]'
+    })
+
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()
 
@@ -67,7 +72,7 @@ Encore
     //.enableIntegrityHashes(Encore.isProduction())
 
     // uncomment if you're having problems with a jQuery plugin
-    //.autoProvidejQuery()
+    // .autoProvidejQuery()
 ;
 
 module.exports = Encore.getWebpackConfig();
