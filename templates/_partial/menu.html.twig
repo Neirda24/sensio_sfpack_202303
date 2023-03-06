@@ -1,0 +1,24 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark" aria-label="My Movie Gallery">
+    <div class="container">
+        <a class="navbar-brand" href="{{ path('homepage') }}">My Movie Gallery</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample07" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbar">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="{{ path('homepage') }}">Home</a>
+                </li>
+                {% for movie in movies %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('app_movie_detail', {slug: movie.slug}) }}">{{ movie.title }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+            <form role="search">
+                <input class="form-control" type="search" placeholder="Search" aria-label="Search">
+            </form>
+        </div>
+    </div>
+</nav>
