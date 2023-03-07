@@ -24,6 +24,13 @@ class MovieController extends AbstractController
         }
 
         $createOrEditMovieForm = $this->createForm(MovieType::class, $movieEntity);
+        $createOrEditMovieForm->handleRequest($request);
+
+        if ($createOrEditMovieForm->isSubmitted() && $createOrEditMovieForm->isValid()) {
+            $movieRepository->save($movieEntity, true);
+
+            return $this->redirectToRoute('app_movie_detail', ['slug' => $movieEntity->getSlug()]);
+        }
 
         return $this->render('movie/index.html.twig', [
             'movies'                => array_map(Movie::fromMovieEntity(...), $movieRepository->listAll()),

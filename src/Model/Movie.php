@@ -8,6 +8,7 @@ use App\Entity\Genre as GenreEntity;
 use App\Entity\Movie as MovieEntity;
 use DateTimeImmutable;
 use function array_map;
+use function str_starts_with;
 
 final class Movie
 {
@@ -36,5 +37,10 @@ final class Movie
                 return $genre->getName();
             }, $movieEntity->getGenres()->toArray()),
         );
+    }
+
+    public function isRemotePoster(): bool
+    {
+        return str_starts_with($this->poster, 'http');
     }
 }
