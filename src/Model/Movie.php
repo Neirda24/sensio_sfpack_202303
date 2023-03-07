@@ -41,6 +41,6 @@ final class Movie
 
     public function isRemotePoster(): bool
     {
-        return str_starts_with($this->poster, 'http');
+        return str_starts_with($this->poster, 'http') === true;
     }
 }
