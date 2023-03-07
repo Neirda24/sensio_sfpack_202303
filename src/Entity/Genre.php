@@ -6,6 +6,7 @@ use App\Repository\GenreRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: GenreRepository::class)]
+#[ORM\ChangeTrackingPolicy('DEFERRED_EXPLICIT')]
 class Genre
 {
     #[ORM\Id]

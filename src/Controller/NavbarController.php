@@ -13,7 +13,7 @@ class NavbarController extends AbstractController
     public function __invoke(MovieRepository $movieRepository): Response
     {
         return $this->render('_partial/menu.html.twig', [
-            'movies' => array_map(Movie::fromMovieEntity(...), $movieRepository->findAll()),
+            'movies' => array_map(Movie::fromMovieEntity(...), $movieRepository->listAll()),
         ]);
     }
 }

@@ -51,6 +51,21 @@ class MovieRepository extends ServiceEntityRepository
         return $qb->getQuery()->getSingleResult();
     }
 
+    /**
+     * @return iterable<Movie>
+     */
+    public function listAll(): iterable
+    {
+        $qb = $this->createQueryBuilder('movie');
+
+        $qb
+            ->addSelect('genre')
+            ->join('movie.genres', 'genre')
+        ;
+
+        return $qb->getQuery()->getResult();
+    }
+
 //    /**
 //     * @return Movie[] Returns an array of Movie objects
 //     */

@@ -15,7 +15,7 @@ class MovieController extends AbstractController
     public function index(MovieRepository $movieRepository): Response
     {
         return $this->render('movie/index.html.twig', [
-            'movies' => array_map(Movie::fromMovieEntity(...), $movieRepository->findAll()),
+            'movies' => array_map(Movie::fromMovieEntity(...), $movieRepository->listAll()),
         ]);
     }
 
