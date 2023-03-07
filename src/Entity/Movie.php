@@ -3,10 +3,13 @@
 namespace App\Entity;
 
 use App\Repository\MovieRepository;
+use App\Validation\Constraint\Poster;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints\Count;
+use Symfony\Component\Validator\Constraints\Length;
 
 #[ORM\Entity(repositoryClass: MovieRepository::class)]
 #[ORM\ChangeTrackingPolicy('DEFERRED_EXPLICIT')]
@@ -17,21 +20,26 @@ class Movie
     #[ORM\Column()]
     private ?int $id = null;
 
+    #[Length(min: 3)]
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
+    #[Length(min: 3)]
     #[ORM\Column(length: 255)]
     private ?string $slug = null;
 
+    #[Poster]
     #[ORM\Column(length: 255)]
     private ?string $poster = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
     private ?\DateTimeImmutable $releasedAt = null;
 
+    #[Length(min: 20)]
     #[ORM\Column(type: Types::TEXT)]
     private ?string $plot = null;
 
+    #[Count(min: 1)]
     #[ORM\ManyToMany(targetEntity: Genre::class)]
     private Collection $genres;
 
