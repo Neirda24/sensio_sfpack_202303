@@ -8,10 +8,12 @@
             <div class="col-lg-6 col-md-8 mx-auto">
                 <h1 class="fw-light">My Gallery</h1>
                 <p class="lead text-muted">You can find the list of movies here. Try clicking on one of them to see more details.</p>
-                {#                <p> #}
-                {#                    <a href="#" class="btn btn-primary my-2">Main call to action</a> #}
-                {#                    <a href="#" class="btn btn-secondary my-2">Secondary action</a> #}
-                {#                </p> #}
+            </div>
+            <div class="col-lg-6 col-md-8 mx-auto">
+                {{ form_start(createOrEditMovieForm) }}
+                    {{ form_widget(createOrEditMovieForm) }}
+                    <button type="submit" class="btn btn-primary">{{ edit is same as(true) ? 'Edit' : 'Create' }}</button>
+                {{ form_end(createOrEditMovieForm) }}
             </div>
         </div>
     </section>
@@ -22,14 +24,19 @@
                 {% for movie in movies %}
                         <div class="col">
                             <div class="card shadow-sm">
+                                {% if movie.isRemotePoster is same as(true) %}
+                                <img src="{{ movie.poster }}" alt="Poster of {{ movie.title }}">
+                                {% else %}
                                 <img src="{{ asset('build/images/movies/' ~ movie.poster) }}" alt="Poster of {{ movie.title }}">
+                                {% endif %}
 
                                 <div class="card-body">
                                     <p class="card-text">
                                         {% for genre in movie.genres %}
                                             <span class="badge bg-dark">{{ genre }}</span>
                                         {% endfor %}
-                                    <h3>{{ movie.title }}</h3>{{ movie.plot }}
+
+                                    <h3><a href="{{ path('app_movies_edit', {'slug': movie.slug}) }}"><i class="fa fa-edit"></i></a>{{ movie.title }}</h3>{{ movie.plot }}
                                     </p>
                                     <a href="{{ path('app_movie_detail', {slug: movie.slug}) }}">Voir plus</a>
                                     <div class="d-flex justify-content-between align-items-center">
