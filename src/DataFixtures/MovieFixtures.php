@@ -2,14 +2,16 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\Genre;
 use App\Entity\Movie;
 use DateTimeImmutable;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 
-class MovieFixtures extends Fixture
+class MovieFixtures extends Fixture implements DependentFixtureInterface
 {
-    /** @var list<array{title: string, slug: string, poster: string, releasedAt: string, plot: string}> */
+    /** @var list<array{title: string, slug: string, poster: string, releasedAt: string, plot: string, genres: list<string>}> */
     private const MOVIES = [
         [
             'title'      => 'Astérix & Obélix: Mission Cléopâtre',
@@ -47,6 +49,18 @@ Alors que Bond et Vesper s'efforcent d'échapper aux tentatives d'assassinat du 
         ],
     ];
 
+    public function getDependencies(): array
+    {
+        return [
+            GenreFixtures::class,
+        ];
+    }
+
+    private function getGenre(string $genreName): Genre
+    {
+        return $this->getReference("Genre.{$genreName}");
+    }
+
     public function load(ObjectManager $manager): void
     {
         foreach (self::MOVIES as $movieData) {
@@ -56,6 +70,11 @@ Alors que Bond et Vesper s'efforcent d'échapper aux tentatives d'assassinat du 
                 ->setPoster($movieData['poster'])
                 ->setPlot($movieData['plot'])
                 ->setReleasedAt(new DateTimeImmutable($movieData['releasedAt']));
+
+            foreach ($movieData['genres'] as $genreName) {
+                $movie->addGenre($this->getGenre($genreName));
+            }
+
             $manager->persist($movie);
         }
 

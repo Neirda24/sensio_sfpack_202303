@@ -23,6 +23,7 @@ class GenreFixtures extends Fixture
         foreach (self::GENRES as $genreName) {
             $genre = (new Genre())->setName($genreName);
             $manager->persist($genre);
+            $this->addReference("Genre.{$genreName}", $genre);
         }
 
         $manager->flush();
