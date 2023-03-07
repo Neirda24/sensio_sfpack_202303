@@ -9,7 +9,13 @@ use Doctrine\Persistence\ObjectManager;
 class GenreFixtures extends Fixture
 {
     private const GENRES = [
+        'Action',
+        'Adventure',
         'Comedy',
+        'Drama',
+        'Fantasy',
+        'Spy',
+        'Thriller',
     ];
 
     public function load(ObjectManager $manager): void
