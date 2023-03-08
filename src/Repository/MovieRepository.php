@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Movie;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 /**
  * @extends ServiceEntityRepository<Movie>
@@ -16,13 +17,17 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class MovieRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
+    public function __construct(
+        ManagerRegistry                   $registry,
+        private readonly SluggerInterface $slugger,
+    ) {
         parent::__construct($registry, Movie::class);
     }
 
     public function save(Movie $entity, bool $flush = false): void
     {
+        $entity->setSlug($this->slugger->slug($entity->getTitle()));
+
         $this->getEntityManager()->persist($entity);
 
         if ($flush) {
@@ -45,8 +50,7 @@ class MovieRepository extends ServiceEntityRepository
 
         $qb
             ->where($qb->expr()->eq('movie.slug', ':slug'))
-            ->setParameter('slug', $slug)
-        ;
+            ->setParameter('slug', $slug);
 
         return $qb->getQuery()->getSingleResult();
     }
@@ -60,34 +64,33 @@ class MovieRepository extends ServiceEntityRepository
 
         $qb
             ->addSelect('genre')
-            ->join('movie.genres', 'genre')
-        ;
+            ->join('movie.genres', 'genre');
 
         return $qb->getQuery()->getResult();
     }
 
-//    /**
-//     * @return Movie[] Returns an array of Movie objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('m')
-//            ->andWhere('m.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('m.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    //    /**
+    //     * @return Movie[] Returns an array of Movie objects
+    //     */
+    //    public function findByExampleField($value): array
+    //    {
+    //        return $this->createQueryBuilder('m')
+    //            ->andWhere('m.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->orderBy('m.id', 'ASC')
+    //            ->setMaxResults(10)
+    //            ->getQuery()
+    //            ->getResult()
+    //        ;
+    //    }
 
-//    public function findOneBySomeField($value): ?Movie
-//    {
-//        return $this->createQueryBuilder('m')
-//            ->andWhere('m.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    //    public function findOneBySomeField($value): ?Movie
+    //    {
+    //        return $this->createQueryBuilder('m')
+    //            ->andWhere('m.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
 }
