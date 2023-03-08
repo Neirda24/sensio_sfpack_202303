@@ -69,6 +69,11 @@ class Movie
         return $this;
     }
 
+    public function sluggable(): string
+    {
+        return "{$this->getTitle()}-{$this->getYear()}";
+    }
+
     public function getSlug(): ?string
     {
         return $this->slug;
@@ -96,6 +101,11 @@ class Movie
     public function getReleasedAt(): ?\DateTimeImmutable
     {
         return $this->releasedAt;
+    }
+
+    public function getYear(): string
+    {
+        return $this->getReleasedAt()->format('Y');
     }
 
     public function setReleasedAt(\DateTimeImmutable $releasedAt): self

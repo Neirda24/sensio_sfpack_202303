@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Omdb\Client;
 
-use Doctrine\ORM\NoResultException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Throwable;
 use function array_key_exists;
 
 /**
@@ -13,6 +13,7 @@ use function array_key_exists;
  * // TODO : Type : enum
  * // TODO : Response : enum
  * @phpstan-type OmdbMovieResult array{Title: string, Year: string, Rated: string, Released: string, Genre: string, Plot: string, Poster: string, imdbID: string, Type: string, Response: string}
+ * @phpstan-type OmdbMovieSearchResults list<array{Title: string, Year: string, imdbID: string, Type: string, Poster: string}>
  */
 final class OmdbApiConsumer
 {
@@ -28,21 +29,51 @@ final class OmdbApiConsumer
     {
         $response = $this->omdbApiClient->request('GET', '/', [
             'query' => [
-                'i' => $imdbId,
+                'i'    => $imdbId,
                 'plot' => 'full',
-                'r' => 'json'
+                'r'    => 'json',
             ],
         ]);
 
         /** @var OmdbMovieResult $result */
-        $result = $response->toArray(true);
+        try {
+            $result = $response->toArray(true);
+        } catch (Throwable $throwable) {
+            throw new NoResultException($throwable);
+        }
 
         if (array_key_exists('Response', $result) === true && 'False' === $result['Response']) {
-            match ($result['Error']) {
-                'Error getting data.' => throw new NoResultException(),
-            };
+            throw new NoResultException();
         }
 
         return $result;
+    }
+
+    /**
+     * @return OmdbMovieSearchResults
+     */
+    public function searchByName(string $name): array
+    {
+        $response = $this->omdbApiClient->request('GET', '/', [
+            'query' => [
+                'type' => 'movie',
+                'r'    => 'json',
+                'page' => '1',
+                's'    => $name,
+            ],
+        ]);
+
+        /** @var OmdbMovieSearchResults $result */
+        try {
+            $result = $response->toArray(true);
+        } catch (Throwable $throwable) {
+            throw new NoResultException($throwable);
+        }
+
+        if (array_key_exists('Response', $result) === true && 'False' === $result['Response']) {
+            throw new NoResultException();
+        }
+
+        return $result['Search'];
     }
 }

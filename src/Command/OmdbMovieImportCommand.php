@@ -1,0 +1,165 @@
+<?php
+
+namespace App\Command;
+
+use App\Entity\Movie as MovieEntity;
+use App\Model\Rated;
+use App\Omdb\Client\NoResultException;
+use App\Omdb\Client\OmdbApiConsumer;
+use App\Repository\GenreRepository;
+use App\Repository\MovieRepository;
+use DateTimeImmutable;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use function array_reduce;
+use function count;
+use function explode;
+use function sprintf;
+
+#[AsCommand(
+    name: 'omdb:movie:import',
+    description: 'Import one or more movies from the OMDB API into your database.',
+)]
+class OmdbMovieImportCommand extends Command
+{
+    public function __construct(
+        private readonly OmdbApiConsumer $omdbApiConsumer,
+        private readonly MovieRepository $movieRepository,
+        private readonly GenreRepository $genreRepository,
+    ) {
+        parent::__construct(null);
+    }
+
+    protected function configure(): void
+    {
+        $this
+            ->addArgument('id-or-title', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'Can either be an ID or a title.')
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Won\'t import movies to database. Only display summary of actions.')
+            ->setHelp(<<<EOT
+            The <info>%command.name%</info> import movies data from OMDB api to database :
+            <info>php %command.full_name% "movie1-title" "movie2-title" ...</info>
+            <info>php %command.full_name% "id1" "id2" ...</info>
+            <info>php %command.full_name% "id1" "movie2-title" ...</info>
+            EOT,
+            );
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
+
+        $io->title('OMDB Import');
+
+        /** @var list<string> $idOrTitleList */
+        $idOrTitleList = $input->getArgument('id-or-title');
+        $io->note(sprintf('Trying to import %d movies.', count($idOrTitleList)));
+
+        $moviesImported = [];
+        $moviesFailed   = [];
+
+        foreach ($idOrTitleList as $idOrTitle) {
+            $movie = $this->import($io, $idOrTitle);
+
+            if (null === $movie) {
+                $moviesFailed[] = $idOrTitle;
+                continue;
+            }
+
+            $moviesImported[] = [$idOrTitle, $movie];
+        }
+
+        if ($input->getOption('dry-run') === false) {
+            $this->movieRepository->flush();
+        }
+
+        if ([] !== $moviesImported) {
+            $verb = $input->getOption('dry-run') === false ? 'were' : 'would be';
+            $io->success("These movies {$verb} imported :");
+            $io->table(
+                ['ID', 'Search query', 'Title'],
+                array_reduce($moviesImported, static function (array $row, array $movieImported): array {
+                    /** @var MovieEntity $movie */
+                    [$idOrTitle, $movie] = $movieImported;
+
+                    $row[] = [$movie->getId(), $idOrTitle, "{$movie->getTitle()} ({$movie->getYear()})"];
+
+                    return $row;
+                }, []),
+            );
+        }
+
+        if ([] !== $moviesFailed) {
+            $io->error('Those search terms could not be found :');
+            $io->listing(
+                $moviesFailed,
+            );
+        }
+
+        return Command::SUCCESS;
+    }
+
+    private function import(SymfonyStyle $io, string $idOrTitle): ?MovieEntity
+    {
+        $io->section("'{$idOrTitle}'");
+
+        return $this->tryImportAsImdbId($io, $idOrTitle) ?? $this->searchAndImportByTitle($io, $idOrTitle);
+    }
+
+    private function tryImportAsImdbId(SymfonyStyle $io, string $imdbId): ?MovieEntity
+    {
+        try {
+            $result = $this->omdbApiConsumer->getById($imdbId);
+        } catch (NoResultException) {
+            return null;
+        }
+
+        $newMovie = (new MovieEntity())
+            ->setTitle($result['Title'])
+            ->setPoster($result['Poster'])
+            ->setRated(Rated::tryFrom($result['Rated']) ?? Rated::GeneralAudiences)
+            ->setPlot($result['Plot'])
+            ->setReleasedAt(new DateTimeImmutable($result['Released']));
+
+        foreach (explode(', ', $result['Genre']) as $genreName) {
+            $newMovie->addGenre($this->genreRepository->get($genreName));
+        }
+
+        $this->movieRepository->save($newMovie, false);
+
+        return $newMovie;
+    }
+
+    private function searchAndImportByTitle(SymfonyStyle $io, string $title): ?MovieEntity
+    {
+        try {
+            $searchResults = $this->omdbApiConsumer->searchByName($title);
+        } catch (NoResultException) {
+            return null;
+        }
+
+        if (count($searchResults) === 0) {
+            return null;
+        }
+
+        /** @var array<string, string> $choices */
+        $choices = array_reduce($searchResults, static function (array $choices, array $searchResult): array {
+            $choices[$searchResult['imdbID']] = "{$searchResult['Title']} ({$searchResult['Year']})";
+
+            return $choices;
+        }, []);
+
+        if (count($choices) === 1) {
+            $selectedChoice = array_key_first($choices);
+            $io->info("'$selectedChoice' found.");
+        } else {
+            $selectedChoice = $io->choice('Which movie would you like to import ?', $choices);
+        }
+
+        return $this->tryImportAsImdbId($io, $selectedChoice);
+    }
+}
