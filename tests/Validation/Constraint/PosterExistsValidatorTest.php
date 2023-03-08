@@ -17,7 +17,7 @@ final class PosterExistsValidatorTest extends ConstraintValidatorTestCase
 {
     protected function createValidator(): PosterExistsValidator
     {
-        return new PosterExistsValidator();
+        return new PosterExistsValidator(__DIR__ . '/../../../assets/images/movies');
     }
 
     public function testNullIsValid()
