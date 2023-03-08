@@ -68,7 +68,7 @@ Alors que Bond et Vesper s'efforcent d'échapper aux tentatives d'assassinat du 
         foreach (self::MOVIES as $movieData) {
             $movie = (new Movie())
                 ->setTitle($movieData['title'])
-                ->setSlug($this->slugger->slug($movieData['title']))
+                ->setSlug($this->slugger->slug($movieData['title'])->toString())
                 ->setPoster($movieData['poster'])
                 ->setPlot($movieData['plot'])
                 ->setReleasedAt(new DateTimeImmutable($movieData['releasedAt']));

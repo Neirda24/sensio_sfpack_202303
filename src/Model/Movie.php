@@ -6,10 +6,16 @@ namespace App\Model;
 
 use App\Entity\Genre as GenreEntity;
 use App\Entity\Movie as MovieEntity;
+use App\Omdb\Client\OmdbApiConsumer;
 use DateTimeImmutable;
+use Symfony\Component\String\Slugger\SluggerInterface;
 use function array_map;
+use function explode;
 use function str_starts_with;
 
+/**
+ * @phpstan-import-type OmdbMovieResult from OmdbApiConsumer
+ */
 final class Movie
 {
     /**
@@ -36,6 +42,21 @@ final class Movie
             genres: array_map(static function (GenreEntity $genre): string {
                 return $genre->getName();
             }, $movieEntity->getGenres()->toArray()),
+        );
+    }
+
+    /**
+     * @param OmdbMovieResult $omdbApiResult
+     */
+    public static function fromOmdbApiResult(array $omdbApiResult, SluggerInterface $slugger): self
+    {
+        return new self(
+            title: $omdbApiResult['Title'],
+            slug: $slugger->slug($omdbApiResult['Title'])->toString(),
+            poster: $omdbApiResult['Poster'],
+            releasedAt: new DateTimeImmutable($omdbApiResult['Released']),
+            plot: $omdbApiResult['Plot'],
+            genres: explode(', ', $omdbApiResult['Genre']),
         );
     }
 

@@ -5,17 +5,22 @@ namespace App\Controller;
 use App\Entity\Movie as MovieEntity;
 use App\Form\MovieType;
 use App\Model\Movie;
+use App\Omdb\Client\OmdbApiConsumer;
 use App\Repository\MovieRepository;
+use Doctrine\ORM\NoResultException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 use function array_map;
 
 class MovieController extends AbstractController
 {
     public function __construct(
-        private readonly MovieRepository $movieRepository,
+        private readonly MovieRepository  $movieRepository,
+        private readonly OmdbApiConsumer  $omdbApiConsumer,
+        private readonly SluggerInterface $slugger,
     ) {
     }
 
@@ -47,8 +52,14 @@ class MovieController extends AbstractController
     #[Route('/movies/{slug}', name: 'app_movie_detail', methods: ['GET'])]
     public function details(string $slug): Response
     {
+        try {
+            $movie = Movie::fromMovieEntity($this->movieRepository->getBySlug($slug));
+        } catch (NoResultException $noResultException) {
+            $movie = Movie::fromOmdbApiResult($this->omdbApiConsumer->getById($slug), $this->slugger);
+        }
+
         return $this->render('movie/details.html.twig', [
-            'movie' => Movie::fromMovieEntity($this->movieRepository->getBySlug($slug)),
+            'movie' => $movie,
         ]);
     }
 }

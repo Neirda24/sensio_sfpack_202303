@@ -26,7 +26,7 @@ class MovieRepository extends ServiceEntityRepository
 
     public function save(Movie $entity, bool $flush = false): void
     {
-        $entity->setSlug($this->slugger->slug($entity->getTitle()));
+        $entity->setSlug($this->slugger->slug($entity->getTitle())->toString());
 
         $this->getEntityManager()->persist($entity);
 
