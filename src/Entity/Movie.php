@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Model\Rated;
 use App\Repository\MovieRepository;
 use App\Validation\Constraint\Poster;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -42,6 +43,9 @@ class Movie
     #[Count(min: 1)]
     #[ORM\ManyToMany(targetEntity: Genre::class)]
     private Collection $genres;
+
+    #[ORM\Column(length: 15, enumType: Rated::class)]
+    private ?Rated $rated = Rated::GeneralAudiences;
 
     public function __construct()
     {
@@ -133,6 +137,18 @@ class Movie
     public function removeGenre(Genre $genre): self
     {
         $this->genres->removeElement($genre);
+
+        return $this;
+    }
+
+    public function getRated(): ?Rated
+    {
+        return $this->rated;
+    }
+
+    public function setRated(Rated $rated): self
+    {
+        $this->rated = $rated;
 
         return $this;
     }
