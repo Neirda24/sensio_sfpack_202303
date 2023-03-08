@@ -9,22 +9,16 @@ use Throwable;
 use function array_key_exists;
 
 /**
- * // TODO : Rated : enum
- * // TODO : Type : enum
- * // TODO : Response : enum
- * @phpstan-type OmdbMovieResult array{Title: string, Year: string, Rated: string, Released: string, Genre: string, Plot: string, Poster: string, imdbID: string, Type: string, Response: string}
- * @phpstan-type OmdbMovieSearchResults list<array{Title: string, Year: string, imdbID: string, Type: string, Poster: string}>
+ * @phpstan-import-type OmdbMovieResult from OmdbApiConsumerInterface
+ * @phpstan-import-type OmdbMovieSearchResults from OmdbApiConsumerInterface
  */
-final class OmdbApiConsumer
+final class OmdbApiConsumer implements OmdbApiConsumerInterface
 {
     public function __construct(
         private readonly HttpClientInterface $omdbApiClient,
     ) {
     }
 
-    /**
-     * @return OmdbMovieResult
-     */
     public function getById(string $imdbId): array
     {
         $response = $this->omdbApiClient->request('GET', '/', [
@@ -49,9 +43,6 @@ final class OmdbApiConsumer
         return $result;
     }
 
-    /**
-     * @return OmdbMovieSearchResults
-     */
     public function searchByName(string $name): array
     {
         $response = $this->omdbApiClient->request('GET', '/', [

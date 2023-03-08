@@ -3,12 +3,11 @@
 namespace App\Command;
 
 use App\Entity\Movie as MovieEntity;
-use App\Model\Rated;
+use App\Omdb\Bridge\AutoImportConfig;
+use App\Omdb\Bridge\OmdbToDatabaseImporter;
 use App\Omdb\Client\NoResultException;
-use App\Omdb\Client\OmdbApiConsumer;
-use App\Repository\GenreRepository;
+use App\Omdb\Client\OmdbApiConsumerInterface;
 use App\Repository\MovieRepository;
-use DateTimeImmutable;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -18,7 +17,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use function array_reduce;
 use function count;
-use function explode;
 use function sprintf;
 
 #[AsCommand(
@@ -28,9 +26,10 @@ use function sprintf;
 class OmdbMovieImportCommand extends Command
 {
     public function __construct(
-        private readonly OmdbApiConsumer $omdbApiConsumer,
-        private readonly MovieRepository $movieRepository,
-        private readonly GenreRepository $genreRepository,
+        private readonly OmdbApiConsumerInterface $omdbApiConsumer,
+        private readonly OmdbToDatabaseImporter   $omdbToDatabaseImporter,
+        private readonly AutoImportConfig         $autoImportConfig,
+        private readonly MovieRepository          $movieRepository,
     ) {
         parent::__construct(null);
     }
@@ -51,6 +50,8 @@ class OmdbMovieImportCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $this->autoImportConfig->skip();
+
         $io = new SymfonyStyle($input, $output);
 
         $io->title('OMDB Import');
@@ -100,6 +101,8 @@ class OmdbMovieImportCommand extends Command
             );
         }
 
+        $this->autoImportConfig->restore();
+
         return Command::SUCCESS;
     }
 
@@ -118,20 +121,7 @@ class OmdbMovieImportCommand extends Command
             return null;
         }
 
-        $newMovie = (new MovieEntity())
-            ->setTitle($result['Title'])
-            ->setPoster($result['Poster'])
-            ->setRated(Rated::tryFrom($result['Rated']) ?? Rated::GeneralAudiences)
-            ->setPlot($result['Plot'])
-            ->setReleasedAt(new DateTimeImmutable($result['Released']));
-
-        foreach (explode(', ', $result['Genre']) as $genreName) {
-            $newMovie->addGenre($this->genreRepository->get($genreName));
-        }
-
-        $this->movieRepository->save($newMovie, false);
-
-        return $newMovie;
+        return $this->omdbToDatabaseImporter->importFromApiData($result, false);
     }
 
     private function searchAndImportByTitle(SymfonyStyle $io, string $title): ?MovieEntity

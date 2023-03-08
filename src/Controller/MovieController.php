@@ -5,7 +5,7 @@ namespace App\Controller;
 use App\Entity\Movie as MovieEntity;
 use App\Form\MovieType;
 use App\Model\Movie;
-use App\Omdb\Client\OmdbApiConsumer;
+use App\Omdb\Client\OmdbApiConsumerInterface;
 use App\Repository\MovieRepository;
 use Doctrine\ORM\NoResultException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,9 +18,9 @@ use function array_map;
 class MovieController extends AbstractController
 {
     public function __construct(
-        private readonly MovieRepository  $movieRepository,
-        private readonly OmdbApiConsumer  $omdbApiConsumer,
-        private readonly SluggerInterface $slugger,
+        private readonly MovieRepository          $movieRepository,
+        private readonly OmdbApiConsumerInterface $omdbApiConsumer,
+        private readonly SluggerInterface         $slugger,
     ) {
     }
 

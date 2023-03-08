@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Omdb\Client;
 
-use RuntimeException;
+use Exception;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
-final class NoResultException extends RuntimeException implements HttpExceptionInterface
+final class NoResultException extends Exception implements HttpExceptionInterface
 {
     public function __construct(?Throwable $previous = null)
     {
