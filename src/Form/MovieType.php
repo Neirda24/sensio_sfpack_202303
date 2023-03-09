@@ -22,7 +22,7 @@ class MovieType extends AbstractType
             ->add('poster')
             ->add('rated', EnumType::class, [
                 'class' => Rated::class,
-                'choice_label' => 'value'
+                'choice_label' => 'value',
             ])
             ->add('releasedAt', DateType::class, [
                 'widget' => 'single_text',

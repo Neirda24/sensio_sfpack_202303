@@ -3,8 +3,10 @@
 namespace App\Repository;
 
 use App\Entity\Movie;
+use App\EventSubscriber\MovieAddedEvent;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 /**
@@ -18,8 +20,9 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 class MovieRepository extends ServiceEntityRepository
 {
     public function __construct(
-        ManagerRegistry                   $registry,
-        private readonly SluggerInterface $slugger,
+        ManagerRegistry                           $registry,
+        private readonly SluggerInterface         $slugger,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
         parent::__construct($registry, Movie::class);
     }
@@ -32,6 +35,8 @@ class MovieRepository extends ServiceEntityRepository
 
         if ($flush) {
             $this->getEntityManager()->flush();
+
+            $this->eventDispatcher->dispatch(new MovieAddedEvent($entity));
         }
     }
 
