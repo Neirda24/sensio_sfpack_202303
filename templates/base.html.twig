@@ -12,7 +12,7 @@
         {{ encore_entry_script_tags('app') }}
     {% endblock %}
 </head>
-<body>
+<body class="{% block bodyClass '' %}">
 <main>
     {{ render(controller('App\\Controller\\NavbarController::__invoke')) }}
     {% block body %}{% endblock %}
