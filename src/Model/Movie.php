@@ -28,6 +28,7 @@ final class Movie
         public readonly DateTimeImmutable $releasedAt,
         public readonly string            $plot,
         public readonly array             $genres,
+        public readonly Rated             $rated,
     ) {
     }
 
@@ -42,6 +43,7 @@ final class Movie
             genres: array_map(static function (GenreEntity $genre): string {
                 return $genre->getName();
             }, $movieEntity->getGenres()->toArray()),
+            rated: $movieEntity->getRated(),
         );
     }
 
@@ -57,6 +59,7 @@ final class Movie
             releasedAt: new DateTimeImmutable($omdbApiResult['Released']),
             plot: $omdbApiResult['Plot'],
             genres: explode(', ', $omdbApiResult['Genre']),
+            rated: Rated::tryFrom($omdbApiResult['Rated']) ?? Rated::GeneralAudiences,
         );
     }
 

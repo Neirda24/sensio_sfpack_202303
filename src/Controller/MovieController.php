@@ -7,6 +7,7 @@ use App\Form\MovieType;
 use App\Model\Movie;
 use App\Omdb\Client\OmdbApiConsumerInterface;
 use App\Repository\MovieRepository;
+use App\Security\Voter\MovieVoter;
 use Doctrine\ORM\NoResultException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,9 +26,13 @@ class MovieController extends AbstractController
     }
 
     #[Route('/movies', name: 'app_movies_list', methods: ['GET', 'POST'])]
-    #[Route('/movies/{slug}/edit', name: 'app_movies_edit', methods: ['GET', 'POST'])]
+    #[Route('/admin/movies/{slug}/edit', name: 'app_movies_edit', methods: ['GET', 'POST'])]
     public function index(Request $request, ?string $slug = null): Response
     {
+        if ($request->isMethod('POST')) {
+            $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        }
+
         $movieEntity = new MovieEntity();
         if (null !== $slug) {
             $movieEntity = $this->movieRepository->getBySlug($slug);
@@ -57,6 +62,8 @@ class MovieController extends AbstractController
         } catch (NoResultException $noResultException) {
             $movie = Movie::fromOmdbApiResult($this->omdbApiConsumer->getById($slug), $this->slugger);
         }
+
+        $this->denyAccessUnlessGranted(MovieVoter::VIEW_DETAILS, $movie);
 
         return $this->render('movie/details.html.twig', [
             'movie' => $movie,
